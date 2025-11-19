@@ -8,6 +8,8 @@ type CreateOrderItemInput = {
   variant_id?: number | null;
   quantity?: number;
   notes?: string | null;
+  options?: { option_id: number; quantity?: number }[]; // nuevo
+
 };
 
 type CreateOrderInput = {
@@ -64,56 +66,92 @@ export const getOrderByIdService = async (orderId: number) => {
   return { ...order, items };
 };
 
+
+async function fetchProductBase(client: any, productId: number) {
+  const q = `SELECT base_price FROM public.products WHERE id = $1`;
+  const { rows } = await client.query(q, [productId]);
+  if (!rows[0]) throw new Error(`Product ${productId} not found`);
+  return Number(rows[0].base_price) || 0;
+}
+
+async function fetchVariantModifier(client: any, variantId: number) {
+  const q = `SELECT price_modifier FROM public.product_variants WHERE id = $1`;
+  const { rows } = await client.query(q, [variantId]);
+  if (!rows[0]) throw new Error(`Variant ${variantId} not found`);
+  return Number(rows[0].price_modifier) || 0;
+}
+
+async function fetchOptionModifiers(client: any, optionIds: { option_id: number; quantity?: number }[]) {
+  if (!optionIds || optionIds.length === 0) return { sumModifiers: 0, optionDetails: [] };
+
+  // obtener price_modifier y allow_quantity de cada option en una sola query
+  const ids = optionIds.map(o => o.option_id);
+  const q = `SELECT id, price_modifier, allow_quantity FROM public.product_options WHERE id = ANY($1::bigint[])`;
+  const { rows } = await client.query(q, [ids]);
+
+  // map por id
+  const map = new Map<number, any>();
+  for (const r of rows) map.set(Number(r.id), r);
+
+  let sumModifiers = 0;
+  const optionDetails: { option_id: number; quantity: number; price_modifier: number }[] = [];
+
+  for (const oi of optionIds) {
+    const rec = map.get(Number(oi.option_id));
+    if (!rec) throw new Error(`Option ${oi.option_id} not found`);
+    const qty = oi.quantity && oi.quantity > 0 ? oi.quantity : 1;
+    if (!rec.allow_quantity && qty > 1) {
+      // si no permite cantidad, normalizamos a 1
+      // o podríamos lanzar error; elegimos normalizar
+    }
+    const pm = Number(rec.price_modifier) || 0;
+    sumModifiers += pm * qty;
+    optionDetails.push({ option_id: oi.option_id, quantity: qty, price_modifier: pm });
+  }
+
+  return { sumModifiers, optionDetails };
+}
+
 /**
  * Crea un pedido y sus items en una transacción.
  * Para calcular unit_price: toma products.base_price + variant.price_modifier (si aplica).
  */
-export const createOrderService = async (payload: CreateOrderInput) => {
+export const createOrderService = async (payload: any) => {
   const client = await postgresPool.connect();
   try {
     await client.query("BEGIN");
 
-    const insertOrderQuery = `
+    const insertOrderQ = `
       INSERT INTO public.orders (status, payment_status, payment_method, total, created_at, updated_at, source, notes)
       VALUES ($1, $2, $3, $4, NOW(), NOW(), $5, $6)
       RETURNING *
     `;
-    const defaultSource = payload.source || "kiosk";
-    const { rows: [createdOrder] } = await client.query(insertOrderQuery, [
+    const { rows: [createdOrder] } = await client.query(insertOrderQ, [
       "pending",
       "pending",
       payload.payment_method || null,
-      0, // total inicial (se actualizará por trigger)
-      defaultSource,
+      0,
+      payload.source || "kiosk",
       payload.notes || null
     ]);
 
-    // Insert items
-    for (const it of payload.items) {
-      // Obtener precios base y modifier
-      const prodQ = `SELECT base_price FROM public.products WHERE id = $1`;
-      const { rows: prodRows } = await client.query(prodQ, [it.product_id]);
-      if (!prodRows[0]) throw new Error(`Product ${it.product_id} not found`);
+    // insertar items con opciones
+    for (const it of payload.items as CreateOrderItemInput[]) {
+      const basePrice = await fetchProductBase(client, it.product_id);
+      const variantModifier = it.variant_id ? await fetchVariantModifier(client, it.variant_id) : 0;
 
-      const basePrice = Number(prodRows[0].base_price) || 0;
-      let modifier = 0;
-      if (it.variant_id) {
-        const varQ = `SELECT price_modifier FROM public.product_variants WHERE id = $1`;
-        const { rows: varRows } = await client.query(varQ, [it.variant_id]);
-        if (!varRows[0]) throw new Error(`Variant ${it.variant_id} not found`);
-        modifier = Number(varRows[0].price_modifier) || 0;
-      }
+      const { sumModifiers, optionDetails } = await fetchOptionModifiers(client, it.options || []);
 
-      const unitPrice = basePrice + modifier;
+      const unitPrice = basePrice + variantModifier + sumModifiers; // price por unidad
       const quantity = it.quantity && it.quantity > 0 ? it.quantity : 1;
+      const subtotal = unitPrice * quantity;
 
       const insertItemQ = `
         INSERT INTO public.order_items (order_id, product_id, variant_id, quantity, unit_price, subtotal, notes, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
         RETURNING *
       `;
-      const subtotal = Number(unitPrice) * quantity;
-      await client.query(insertItemQ, [
+      const { rows: insertedItems } = await client.query(insertItemQ, [
         createdOrder.id,
         it.product_id,
         it.variant_id || null,
@@ -122,13 +160,29 @@ export const createOrderService = async (payload: CreateOrderInput) => {
         subtotal,
         it.notes || null
       ]);
-      // note: triggers on order_items should update orders.total
+      const insertedItem = insertedItems[0];
+
+      // insertar order_item_options
+      if (optionDetails.length) {
+        const insertOptQ = `
+          INSERT INTO public.order_item_options (order_item_id, option_id, quantity, price_modifier)
+          VALUES
+          ${optionDetails.map((_, idx) => `($1, $${idx*3+2}, $${idx*3+3}, $${idx*3+4})`).join(", ")}
+          RETURNING *
+        `;
+        // construir valores dinámicamente
+        const values: any[] = [insertedItem.id];
+        for (const od of optionDetails) {
+          values.push(od.option_id, od.quantity, od.price_modifier);
+        }
+        await client.query(insertOptQ, values);
+      }
+      // triggers deberían actualizar orders.total automáticamente
     }
 
-    // Re-read order with items
     await client.query("COMMIT");
-    const fullOrder = await getOrderByIdService(createdOrder.id);
-    return fullOrder;
+    const full = await getOrderByIdService(createdOrder.id);
+    return full;
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
@@ -169,45 +223,43 @@ export const markOrderPaidService = async (orderId: number, paymentInfo: { metho
 /* --- Order Items CRUD (used by controllers) --- */
 
 export const addOrderItemService = async (orderId: number, item: CreateOrderItemInput) => {
-  // calculate unit price like in createOrderService
   const client = await postgresPool.connect();
   try {
     await client.query("BEGIN");
 
-    const prodQ = `SELECT base_price FROM public.products WHERE id = $1`;
-    const { rows: prodRows } = await client.query(prodQ, [item.product_id]);
-    if (!prodRows[0]) throw new Error(`Product ${item.product_id} not found`);
-    const basePrice = Number(prodRows[0].base_price) || 0;
+    const basePrice = await fetchProductBase(client, item.product_id);
+    const variantModifier = item.variant_id ? await fetchVariantModifier(client, item.variant_id) : 0;
+    const { sumModifiers, optionDetails } = await fetchOptionModifiers(client, item.options || []);
 
-    let modifier = 0;
-    if (item.variant_id) {
-      const varQ = `SELECT price_modifier FROM public.product_variants WHERE id = $1`;
-      const { rows: varRows } = await client.query(varQ, [item.variant_id]);
-      if (!varRows[0]) throw new Error(`Variant ${item.variant_id} not found`);
-      modifier = Number(varRows[0].price_modifier) || 0;
-    }
-
-    const unitPrice = basePrice + modifier;
+    const unitPrice = basePrice + variantModifier + sumModifiers;
     const quantity = item.quantity && item.quantity > 0 ? item.quantity : 1;
     const subtotal = unitPrice * quantity;
 
-    const insertQ = `
+    const insertItemQ = `
       INSERT INTO public.order_items (order_id, product_id, variant_id, quantity, unit_price, subtotal, notes, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
       RETURNING *
     `;
-    const { rows: inserted } = await client.query(insertQ, [
-      orderId,
-      item.product_id,
-      item.variant_id || null,
-      quantity,
-      unitPrice,
-      subtotal,
-      item.notes || null
+    const { rows: inserted } = await client.query(insertItemQ, [
+      orderId, item.product_id, item.variant_id || null, quantity, unitPrice, subtotal, item.notes || null
     ]);
+    const insertedItem = inserted[0];
+
+    // insertar options si hay
+    if (optionDetails.length) {
+      const insertOptQ = `
+        INSERT INTO public.order_item_options (order_item_id, option_id, quantity, price_modifier)
+        VALUES
+        ${optionDetails.map((_, idx) => `($1, $${idx*3+2}, $${idx*3+3}, $${idx*3+4})`).join(", ")}
+        RETURNING *
+      `;
+      const values: any[] = [insertedItem.id];
+      for (const od of optionDetails) values.push(od.option_id, od.quantity, od.price_modifier);
+      await client.query(insertOptQ, values);
+    }
 
     await client.query("COMMIT");
-    return inserted[0];
+    return insertedItem;
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
