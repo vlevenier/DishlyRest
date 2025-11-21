@@ -12,9 +12,6 @@ export const getOrders = async (req: Request, res: Response, next: NextFunction)
 };
 
 
-
-
-
 export const getOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const orderId = Number(req.params.id);
@@ -33,8 +30,22 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ success: false, message: "At least one item is required" });
     }
 
-    const order = await ordersService.createOrderService(payload);
-    res.status(201).json({ success: true, data: order });
+    const data = await ordersService.createOrderService(payload);
+    res.status(201).json({ success: true, ...data});
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+
+export const createOrderProducts = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const payload = req.body;
+    
+    const data  = await ordersService.createOrderProductsService(payload);
+    res.status(201).json({ success: true, data: data });
   } catch (err) {
     next(err);
   }

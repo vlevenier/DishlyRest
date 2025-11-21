@@ -53,6 +53,9 @@ export const updateProduct = async (id: number, data: {
   is_combo: boolean;
   active: boolean;
 }) => {
+
+
+  try{
   const query = `
     UPDATE products
     SET category_id = $1, name = $2, description = $3, base_price = $4,
@@ -74,6 +77,10 @@ export const updateProduct = async (id: number, data: {
 
   const { rows } = await postgresPool.query(query, params);
   return rows[0];
+} catch (error) {
+  console.error("Error updating product:", error);
+  throw error;
+}
 };
 
 export const deleteProduct = async (id: number) => {

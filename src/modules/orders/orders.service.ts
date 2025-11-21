@@ -1,4 +1,5 @@
 import { postgresPool } from "../../config/postgres";
+import { runInTransaction } from "../../db/transaction";
 
 /**
  * Tipos mínimos para inputs (puedes mover a .types.ts)
@@ -189,6 +190,77 @@ export const createOrderService = async (payload: any) => {
   } finally {
     client.release();
   }
+};
+
+
+
+export const createOrderProductsService = async (payload: any) => {
+const { status, payment_status, payment_method, source, items } = payload;
+
+// Validaciones mínimas
+if (!items || !Array.isArray(items) || items.length === 0) {
+throw new Error("Order must include items");
+}
+
+
+console.log("Creating order with items:", payload);
+return runInTransaction(async (client) => {
+
+//
+// 1️⃣ Crear la orden
+//
+const orderRes = await client.query(
+  `
+  INSERT INTO orders (status, payment_status, payment_method, source)
+  VALUES ($1, $2, $3, $4)
+  RETURNING id
+  `,
+  [status, payment_status, payment_method, source]
+);
+
+const orderId = orderRes.rows[0].id;
+
+//
+// 2️⃣ Insertar items usando un solo INSERT (batch)
+//     Los precios y subtotales los calcula la BD
+//
+const values = items.flatMap(i => [i.product_id, i.quantity]);
+
+const valueRows = items
+  .map((_, i) => `($${i*2+2}::BIGINT, $${i*2+3}::INTEGER)`)
+  .join(", ");
+
+  console.log("orderId:", orderId );
+  console.log( values );
+  console.log( valueRows );
+const sql = `
+  INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+  SELECT 
+    $1,
+    p.id,
+    v.quantity,
+    p.base_price
+   -- ,p.base_price * v.quantity
+  FROM products p
+  JOIN (VALUES ${valueRows}) AS v(product_id, quantity)
+    ON v.product_id = p.id
+`;
+console.log("Executing SQL:", sql); 
+const detOreder =  await client.query({
+  text: sql,
+  values: [orderId, ...values.flat()],
+  name: `insert_order_items_${Date.now()}`
+});
+//
+// 3️⃣ Listo: los triggers se encargan de recalcular total
+//
+console.log(detOreder);
+return {
+  ok: true,
+  order_id: orderId
+};
+
+});
 };
 
 export const updateOrderStatusService = async (orderId: number, status: string) => {

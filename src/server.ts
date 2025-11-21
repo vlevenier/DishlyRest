@@ -99,7 +99,7 @@ process.on('unhandledRejection', (reason: Error) => {
 
 process.on('uncaughtException', (error: Error) => {
   console.error('❌ Uncaught Exception:', error);
-  process.exit(1);
+ // process.exit(1);
 });
 
 process.on('SIGINT', shutdown);

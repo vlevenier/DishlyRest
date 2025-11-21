@@ -7,7 +7,8 @@ import {
   updateOrderStatus,
   addOrderItem,
   updateOrderItem,
-  deleteOrderItem
+  deleteOrderItem,
+  createOrderProducts
 } from "./orders.controller";
 
 const router = Router();
@@ -18,7 +19,8 @@ const router = Router();
 // Orders
 router.get("/", getOrders);
 router.get("/:id", getOrder);
-router.post("/", createOrder);
+// router.post("/", createOrder);
+router.post("/", createOrderProducts);
 
 // Payment (placeholder)
 router.post("/:id/pay", payOrder);
