@@ -27,16 +27,33 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://www.angusgrillhouse.cl",
+  "https://angusgrillhouse.cl",
+];
 // Middlewares de seguridad
 app.use(helmet());
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: process.env.CORS_ORIGIN || '*',
+//     credentials: true,
+//   })
+// );
 
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (Postman, sistemas internos)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("CORS bloqueado para " + origin));
+  },
+  credentials: true,
+}));
 // Middlewares de parseo
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
