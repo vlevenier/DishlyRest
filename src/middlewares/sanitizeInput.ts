@@ -27,7 +27,7 @@ export const sanitizeInput = (req: Request, _res: Response, next: NextFunction) 
 
   // ✔️ NO tocar req.query (getter inmutable)
   // Guardamos la versión sanitizada en una propiedad nueva
-  req.sanitizedQuery = sanitizeObject(req.query);
+(req as any).sanitizedQuery = sanitizeObject(req.query);
 
   next();
 };
