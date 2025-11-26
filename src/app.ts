@@ -14,6 +14,8 @@ import productVariantsRoutes from "./modules/product_variants/product_variants.r
 import productOptionsRoutes from "./modules/product_options/product_options.routes"
 import combosRoutes from "./modules/combos/combos.routes"
 import ordersRoutes from "./modules/orders/orders.routes"
+import filesRoutes from "./modules/files/files.routes"  
+import invoicesRoutes from "./modules/invoices/invoices.routes"
 dotenv.config();
 
 const app: Application = express();
@@ -69,7 +71,8 @@ app.use("/api/productsVariants", productVariantsRoutes);
 app.use("/api/productOptions", productOptionsRoutes);
 app.use("/api/combos", combosRoutes);
 app.use("/api/orders", ordersRoutes);
-
+app.use("/api/files", filesRoutes);
+app.use("/api/invoices", invoicesRoutes);
 // Manejo de rutas no encontradas
 app.use(notFoundHandler);
 
