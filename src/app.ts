@@ -16,6 +16,8 @@ import combosRoutes from "./modules/combos/combos.routes"
 import ordersRoutes from "./modules/orders/orders.routes"
 import filesRoutes from "./modules/files/files.routes"  
 import invoicesRoutes from "./modules/invoices/invoices.routes"
+import cookieParser from "cookie-parser";
+import authRoutes from './modules/auth/auth.routes';
 dotenv.config();
 
 const app: Application = express();
@@ -59,6 +61,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(limiter);
 app.use(sanitizeInput);
+app.use(cookieParser());
 
 // Logger de requests
 if (process.env.NODE_ENV === 'development') {
@@ -80,7 +83,10 @@ app.get('/health', (req, res) => {
 // Importar rutas aquí
 // import exampleRoutes from './routes/example.routes';
 // app.use('/api/v1/examples', exampleRoutes);
-
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/products", itemsRoutes);
@@ -90,6 +96,7 @@ app.use("/api/combos", combosRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/files", filesRoutes);
 app.use("/api/invoices", invoicesRoutes);
+app.use("/api/auth", authRoutes);
 // Manejo de rutas no encontradas
 app.use(notFoundHandler);
 
