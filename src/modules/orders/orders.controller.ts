@@ -4,13 +4,41 @@ import * as ordersService from "./orders.service";
 export const getOrders = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status, source } = req.query as any;
-    const orders = await ordersService.getOrdersService({ status, source });
+    const orders = await ordersService.getOrdersServiceFull({ status, source });
     res.status(200).json({ success: true, count: orders.length, data: orders });
   } catch (err) {
     next(err);
   }
 };
 
+
+export const getOrdersFilters = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {
+      status,
+      source,
+      sortField,
+      sortDir,
+      page = "1",
+      limit = "20",
+      todayOnly
+    } = req.query as any;
+
+    const result = await ordersService.listOrders({
+      status,
+      source,
+      sort: sortField ? { field: String(sortField), direction: String(sortDir) } : undefined,
+      page: Number(page),
+      limit: Number(limit),
+      todayOnly: todayOnly === "true" ? true : false,
+    });
+
+    res.status(200).json(result);
+
+  } catch (err) {
+    next(err);
+  }
+};
 
 export const getOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {

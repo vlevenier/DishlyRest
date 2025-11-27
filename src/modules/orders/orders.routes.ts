@@ -8,7 +8,8 @@ import {
   addOrderItem,
   updateOrderItem,
   deleteOrderItem,
-  createOrderProducts
+  createOrderProducts,
+  getOrdersFilters
 } from "./orders.controller";
 
 const router = Router();
@@ -18,6 +19,7 @@ const router = Router();
 
 // Orders
 router.get("/", getOrders);
+router.get("/filters", getOrdersFilters);
 router.get("/:id", getOrder);
 // router.post("/", createOrder);
 router.post("/", createOrderProducts);

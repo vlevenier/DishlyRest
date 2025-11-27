@@ -1,5 +1,6 @@
 import { postgresPool } from "../../config/postgres";
 import { runInTransaction } from "../../db/transaction";
+import { listEngine } from "../../services/listEngine";
 
 /**
  * Tipos mínimos para inputs (puedes mover a .types.ts)
@@ -47,6 +48,94 @@ export const getOrdersService = async (filters: { status?: string; source?: stri
   const { rows } = await postgresPool.query(query, params);
   return rows;
 };
+
+
+
+
+export const getOrdersServiceFull = async (filters: { status?: string; source?: string } = {}) => {
+    const { status, source } = filters;
+  const params: any[] = [];
+  const where: string[] = [];
+
+  if (status) {
+    params.push(status);
+    where.push(`o.status = $${params.length}`);
+  }
+  if (source) {
+    params.push(source);
+    where.push(`o.source = $${params.length}`);
+  }
+
+  const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+  const query = `
+    SELECT
+      o.*,
+      COALESCE(oi_count.cnt, 0) AS items_count,
+      COALESCE(oi_preview.items, '[]'::json) AS items_preview
+    FROM public.orders o
+    LEFT JOIN LATERAL (
+      SELECT COUNT(1) AS cnt
+      FROM public.order_items oi
+      WHERE oi.order_id = o.id
+    ) oi_count ON true
+    LEFT JOIN LATERAL (
+      SELECT json_agg(
+               json_build_object(
+                 'product_id', oi.product_id,
+                 'name', p.name,
+                 'quantity', oi.quantity
+               ) ORDER BY oi.id
+             ) FILTER (WHERE oi.id IS NOT NULL) AS items
+      FROM public.order_items oi
+      LEFT JOIN public.products p ON p.id = oi.product_id
+      WHERE oi.order_id = o.id
+      LIMIT 3
+    ) oi_preview ON true
+    ${whereClause}
+    ORDER BY o.created_at DESC
+    LIMIT 100
+  `;
+
+  const { rows } = await postgresPool.query(query, params);
+  return rows;
+};
+
+
+
+export function listOrders(filters: any) {
+
+    const extraWhere = [];
+console.log("Filters received in listOrders:", filters);
+ if (filters.todayOnly) {
+    extraWhere.push(`o.created_at::date = CURRENT_DATE`);
+  }
+  return listEngine(filters, {
+    table: "public.orders o",
+    columns: ["o.*"],
+    columnsMap: {
+      status: "o.status",
+      payment_status: "o.payment_status",
+      payment_method: "o.payment_method",
+      source: "o.source",
+      order_number: "o.order_number",
+    },
+    defaultOrder: { column: "created_at", direction: "DESC" },
+    extraWhere,
+    preview: {
+      table: "public.order_items oi",
+      foreignKey: "oi.order_id",
+      limit: 3,
+      select: `
+        json_build_object(
+          'product_id', oi.product_id,
+          'quantity', oi.quantity
+          
+        )
+      `,
+    },
+  });
+}
 
 export const getOrderByIdService = async (orderId: number) => {
   const orderQuery = `SELECT * FROM public.orders WHERE id = $1`;
