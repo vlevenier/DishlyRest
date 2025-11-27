@@ -6,7 +6,7 @@ export const initOraclePool = async () => {
   try {
     await oracledb.createPool({
       user: process.env.DB_USER!,
-      password: process.env.DB_PASS!,
+      password: process.env.DB_PASS!, 
       connectString: process.env.DB_CONNECT!,
       poolMin: 1,
       poolMax: 10,

@@ -1,5 +1,5 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import r2Client from "../lib/r2.js";
+import r2Client from "../lib/r2";
 import fs from "fs";
 
 async function testUpload() {
