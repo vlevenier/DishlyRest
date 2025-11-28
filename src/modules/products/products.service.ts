@@ -1,12 +1,45 @@
 import { postgresPool } from "../../config/postgres";
-
 export const getAllProducts = async () => {
   const query = `
-    SELECT p.*, c.name AS category_name
+    SELECT 
+      p.*,
+      c.name AS category_name,
+      COALESCE(
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'id', v.id,
+            'name', v.name,
+            'price_modifier', v.price_modifier,
+            'position', v.position,
+            'active', v.active,
+            'recipes',
+              COALESCE(
+                (
+                  SELECT json_agg(
+                    jsonb_build_object(
+                      'id', pr.id,
+                      'ingredient_id', pr.ingredient_id,
+                      'quantity_base_per_unit', pr.quantity_base_per_unit,
+                      'ingredient_name', i.name
+                    )
+                  )
+                  FROM product_recipe pr
+                  inner join ingredients i ON i.id = pr.ingredient_id
+                  WHERE pr.product_variant_id = v.id
+                ),
+                '[]'::json
+              )
+          )
+        ) FILTER (WHERE v.id IS NOT NULL),
+        '[]'
+      ) AS variants
     FROM products p
     LEFT JOIN categories c ON c.id = p.category_id
+    LEFT JOIN product_variants v ON v.product_id = p.id
+    GROUP BY p.id, c.name
     ORDER BY p.name ASC;
   `;
+  
   const { rows } = await postgresPool.query(query);
   return rows;
 };

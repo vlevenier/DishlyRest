@@ -18,6 +18,8 @@ import filesRoutes from "./modules/files/files.routes"
 import invoicesRoutes from "./modules/invoices/invoices.routes"
 import cookieParser from "cookie-parser";
 import authRoutes from './modules/auth/auth.routes';
+import ingredientRoutes from './modules/ingredients/ingredients.routes';
+import productRecipe from './modules/product_recipe/productRecipe.routes';
 dotenv.config();
 
 const app: Application = express();
@@ -97,6 +99,8 @@ app.use("/api/orders", ordersRoutes);
 app.use("/api/files", filesRoutes);
 app.use("/api/invoices", invoicesRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/ingredients", ingredientRoutes);
+app.use("/api/product-recipe", productRecipe);
 // Manejo de rutas no encontradas
 app.use(notFoundHandler);
 
