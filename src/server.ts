@@ -14,9 +14,11 @@ const io = new SocketIOServer(server, {
     cors: {
         // Permitir los orígenes de tu frontend y localhost
         origin: [
-            "http://localhost:5173", 
-            "https://www.angusgrillhouse.cl", 
-            "https://angusgrillhouse.cl"
+            "http://localhost:5173",
+      "https://www.angusgrillhouse.cl",
+      "https://www.angusgrillhouse.cl/Dishly",
+      "https://angusgrillhouse.cl",
+      "https://angusgrillhouse.cl/Dishly",
         ],
         methods: ["GET", "POST"],
         credentials: true
