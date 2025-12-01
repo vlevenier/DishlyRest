@@ -20,6 +20,8 @@ import cookieParser from "cookie-parser";
 import authRoutes from './modules/auth/auth.routes';
 import ingredientRoutes from './modules/ingredients/ingredients.routes';
 import productRecipe from './modules/product_recipe/productRecipe.routes';
+import menuRoutes from './modules/menu/menu.routes';
+import testSocketRoute from './tests/testSocket.route'; 
 dotenv.config();
 
 const app: Application = express();
@@ -101,6 +103,8 @@ app.use("/api/invoices", invoicesRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/ingredients", ingredientRoutes);
 app.use("/api/product-recipe", productRecipe);
+app.use("/api/menu", menuRoutes);
+app.use("/api/dev", testSocketRoute); // ⬅️ Ruta para pruebas de Socket.IO
 // Manejo de rutas no encontradas
 app.use(notFoundHandler);
 

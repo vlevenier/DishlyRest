@@ -367,18 +367,24 @@ export const updateOrderStatusService = async (orderId: number, status: string) 
  * Endpoint para marcar pago completado (placeholder).
  * En producción debes verificar webhook de MercadoPago y solo luego setear approved.
  */
-export const markOrderPaidService = async (orderId: number, paymentInfo: { method?: string; provider_id?: string } = {}) => {
-  const query = `
-    UPDATE public.orders
-    SET payment_status = 'approved',
-        payment_method = COALESCE($2, payment_method),
-        status = 'paid',
-        updated_at = NOW()
-    WHERE id = $1
-    RETURNING *
-  `;
-  const { rows } = await postgresPool.query(query, [orderId, paymentInfo.method || null]);
-  return rows[0];
+export const markOrderPaidService = async (orderId: number) => {
+    // ⚠️ Importante: Solo usamos $1 ya que $2 no es necesario si no actualizas payment_method
+    const query = `
+        UPDATE public.orders
+        SET payment_status = 'approved',
+            status = 'paid',
+            updated_at = NOW()
+        WHERE id = $1
+        RETURNING *
+    `;
+    // Asegúrate de que el orderId sea un número
+    const { rows } = await postgresPool.query(query, [orderId]);
+    
+    if (rows.length === 0) {
+        throw new Error(`Order with ID ${orderId} not found or already paid.`);
+    }
+
+    return rows[0];
 };
 
 /* --- Order Items CRUD (used by controllers) --- */

@@ -3,11 +3,37 @@ import app from './app';
 import { testConnection, listTables } from './config/database';
 import http from 'http';
 import { postgresPool, testPostgresConnection } from './config/postgres';
+import { Server as SocketIOServer } from 'socket.io'; // ⬅️ NUEVO: Importar Socket.IO
 
 const server = http.createServer(app);
 
 const PORT = process.env.PORT || 3000;
+// 1. INICIALIZACIÓN DEL SERVIDOR DE SOCKET.IO
+// Adjuntamos Socket.IO al servidor HTTP existente
+const io = new SocketIOServer(server, {
+    cors: {
+        // Permitir los orígenes de tu frontend y localhost
+        origin: [
+            "http://localhost:5173", 
+            "https://www.angusgrillhouse.cl", 
+            "https://angusgrillhouse.cl"
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
 
+// 2. Lógica de conexión de Socket.IO
+io.on('connection', (socket) => {
+    console.log(`[Socket] Cliente conectado: ${socket.id}`);
+    
+    // Si manejas múltiples kioscos, aquí puedes implementar socket.join('kiosco-1')
+    
+    socket.on('disconnect', () => {
+        console.log(`[Socket] Cliente desconectado: ${socket.id}`);
+    });
+});
+// ----------------------------------------------------
 const startServer = async () => {
   try {
     // Verificar variables de entorno
@@ -105,3 +131,7 @@ process.on('uncaughtException', (error: Error) => {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 startServer();
+
+
+
+export { io };
