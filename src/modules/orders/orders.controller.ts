@@ -83,7 +83,7 @@ export const payOrder = async (req: Request, res: Response, next: NextFunction) 
   try {
     const orderId = Number(req.params.id);
     // Aquí solo marcamos como pagado. En producción verifica webhook MercadoPago.
-    const updated = await ordersService.markOrderPaidService(orderId, { method: req.body.method });
+    const updated = await ordersService.markOrderPaidService(orderId);
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
     next(err);
