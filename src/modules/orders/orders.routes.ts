@@ -9,7 +9,8 @@ import {
   updateOrderItem,
   deleteOrderItem,
   createOrderProducts,
-  getOrdersFilters
+  getOrdersFilters,
+  markOrderPaidService
 } from "./orders.controller";
 
 const router = Router();
@@ -29,6 +30,8 @@ router.post("/:id/pay", payOrder);
 
 // Status update
 router.put("/:id/status", updateOrderStatus);
+
+router.put("/:id/pay", markOrderPaidService);
 
 // Order items
 router.post("/:orderId/items", addOrderItem);

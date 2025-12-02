@@ -16,17 +16,19 @@ export const getRecipeByVariant = async (variantId: number) => {
 export const createRecipeItem = async (data: {
   product_variant_id: number;
   ingredient_id: number;
-  quantity_base_per_unit: number;
+  quantity_original: number;
+ingredient_unit_id: number | null;
 }) => {
   const query = `
-    INSERT INTO product_recipe (product_variant_id, ingredient_id, quantity_base_per_unit)
-    VALUES ($1, $2, $3)
+    INSERT INTO product_recipe (product_variant_id, ingredient_id, quantity_original,ingredient_unit_id)
+    VALUES ($1, $2, $3,$4)
     RETURNING *;
   `;
   const params = [
     data.product_variant_id,
     data.ingredient_id,
-    data.quantity_base_per_unit
+    data.quantity_original,
+    data.ingredient_unit_id
   ];
   const { rows } = await postgresPool.query(query, params);
   return rows[0];

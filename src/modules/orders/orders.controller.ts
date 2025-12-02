@@ -127,6 +127,18 @@ export const updateOrderItem = async (req: Request, res: Response, next: NextFun
   }
 };
 
+export const markOrderPaidService = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const orderId = Number(req.params.id);
+    const updates = req.body;
+      console.log("Updates received:", updates);
+    const updated = await ordersService.markOrderPaidService(orderId);
+    res.status(200).json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const deleteOrderItem = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const orderItemId = Number(req.params.id);

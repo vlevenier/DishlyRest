@@ -14,19 +14,36 @@ export const getRecipeByVariant = async (req: Request, res: Response, next: Next
 export const createRecipeItem = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const variantId = Number(req.params.variantId);
-    const { ingredient_id, quantity_base_per_unit } = req.body;
+    const items = req.body;
 
-    if (!ingredient_id || !quantity_base_per_unit) {
-      return res.status(400).json({ success: false, message: "Faltan campos obligatorios" });
+    console.log("Received data:", items);
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "Debe enviar un array" });
     }
 
-    const created = await recipeService.createRecipeItem({
-      product_variant_id: variantId,
-      ingredient_id,
-      quantity_base_per_unit
-    });
+    const created = [];
+
+    for (const item of items) {
+      if (!item.ingredient_id || item.quantity_original == null) {
+        return res.status(400).json({
+          success: false,
+          message: "ingredient_id y quantity_original son obligatorios"
+        });
+      }
+
+      const row = await recipeService.createRecipeItem({
+        product_variant_id: variantId,
+        ingredient_id: item.ingredient_id,
+        quantity_original: item.quantity_original,
+        ingredient_unit_id: item.ingredient_unit_id ?? null
+      });
+
+      created.push(row);
+    }
 
     res.status(201).json({ success: true, data: created });
+
   } catch (err) {
     next(err);
   }

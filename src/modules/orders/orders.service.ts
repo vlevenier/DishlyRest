@@ -123,17 +123,17 @@ console.log("Filters received in listOrders:", filters);
     defaultOrder: { column: "created_at", direction: "DESC" },
     extraWhere,
     preview: {
-      table: "public.order_items oi",
-      foreignKey: "oi.order_id",
-      limit: 3,
-      select: `
-        json_build_object(
-          'product_id', oi.product_id,
-          'quantity', oi.quantity
-          
-        )
-      `,
-    },
+  table: "public.order_items oi LEFT JOIN public.products p ON p.id = oi.product_id",
+  foreignKey: "oi.order_id",
+  limit: 3,
+  select: `
+    json_build_object(
+      'product_id', oi.product_id,
+      'product_name', p.name,
+      'quantity', oi.quantity
+    )
+  `
+},
   });
 }
 
@@ -371,8 +371,8 @@ export const markOrderPaidService = async (orderId: number) => {
     // ⚠️ Importante: Solo usamos $1 ya que $2 no es necesario si no actualizas payment_method
     const query = `
         UPDATE public.orders
-        SET payment_status = 'approved',
-            status = 'paid',
+        SET payment_status = 'paid',
+         --   status = 'paid',
             updated_at = NOW()
         WHERE id = $1
         RETURNING *
