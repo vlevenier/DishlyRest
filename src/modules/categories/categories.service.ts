@@ -5,6 +5,7 @@ export const getAllCategories = async () => {
   const query = `
     SELECT id, name, description, active, created_at
     FROM categories
+    where active = true
     ORDER BY name ASC;
   `;
 
@@ -42,6 +43,17 @@ export const deleteCategory = async (id: number) => {
     RETURNING id;
   `;
 
+  const { rows } = await postgresPool.query(query, [id]);
+  return rows[0];
+};
+
+export const softDeleteCategory = async (id: number) => {
+  const query = `
+    UPDATE categories 
+    SET active = false
+    WHERE id = $1
+    RETURNING id;
+  `;
   const { rows } = await postgresPool.query(query, [id]);
   return rows[0];
 };

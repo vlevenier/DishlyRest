@@ -10,7 +10,7 @@ export class AppError extends Error implements ApiError {
   statusCode: number;
   isOperational: boolean;
 
-  constructor(message: string, statusCode: number = 500) {
+  constructor(message: string, statusCode = 500) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = true;
@@ -24,7 +24,8 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
-  // Error de validación con Zod
+
+  // 🟠 1. Errores de validación (Zod)
   if (err instanceof ZodError) {
     return res.status(400).json({
       success: false,
@@ -36,32 +37,27 @@ export const errorHandler = (
     });
   }
 
-  // Error operacional conocido
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal server error';
-
-  // Log del error en desarrollo
-  if (process.env.NODE_ENV === 'development') {
-    console.error('Error:', {
+  // 🔵 2. Errores operacionales (AppError)
+  if (err instanceof AppError && err.isOperational) {
+    return res.status(err.statusCode).json({
+      success: false,
       message: err.message,
-      stack: err.stack,
-      statusCode,
     });
   }
 
-  res.status(statusCode).json({
+  // 🔴 3. Error desconocido (bug real o no controlado)
+  console.error('UNEXPECTED ERROR:', err);
+
+  return res.status(500).json({
     success: false,
-    message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    message: 'Internal server error',
   });
 };
 
-// Middleware para rutas no encontradas
+// 404 handler
 export const notFoundHandler = (req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     message: `Route ${req.originalUrl} not found`,
   });
 };
-
-

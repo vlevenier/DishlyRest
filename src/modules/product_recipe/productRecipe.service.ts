@@ -34,24 +34,32 @@ ingredient_unit_id: number | null;
   return rows[0];
 };
 
-export const updateRecipeItem = async (id: number, data: {
-  product_variant_id: number;
-  ingredient_id: number;
-  quantity_base_per_unit: number;
-}) => {
+export const updateRecipeItem = async (
+  id: number,
+  data: {
+    product_variant_id: number;
+    ingredient_id: number;
+    quantity_original: number;
+    ingredient_unit_id: number | null;
+  }
+) => {
   const query = `
     UPDATE product_recipe
     SET ingredient_id = $1,
-        quantity_base_per_unit = $2
-    WHERE id = $3 AND product_variant_id = $4
+        quantity_original = $2,
+        ingredient_unit_id = $3
+    WHERE id = $4 AND product_variant_id = $5
     RETURNING *;
   `;
+
   const params = [
     data.ingredient_id,
-    data.quantity_base_per_unit,
+    data.quantity_original,
+    data.ingredient_unit_id,
     id,
     data.product_variant_id
   ];
+
   const { rows } = await postgresPool.query(query, params);
   return rows[0];
 };

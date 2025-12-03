@@ -59,3 +59,14 @@ export const deleteCategory = async (req: Request, res: Response, next: NextFunc
     next(err);
   }
 };
+
+export const softDeleteCategory = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await categoriesService.softDeleteCategory(Number(id));
+    res.status(200).json({ success: true , deleted });
+  } catch (err) {
+    next(err);
+  }   
+};

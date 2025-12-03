@@ -16,7 +16,7 @@ export const createRecipeItem = async (req: Request, res: Response, next: NextFu
     const variantId = Number(req.params.variantId);
     const items = req.body;
 
-    console.log("Received data:", items);
+    console.log("Received data:", items,variantId);
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: "Debe enviar un array" });
@@ -48,17 +48,36 @@ export const createRecipeItem = async (req: Request, res: Response, next: NextFu
     next(err);
   }
 };
-
-export const updateRecipeItem = async (req: Request, res: Response, next: NextFunction) => {
+export const updateRecipeItem = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const variantId = Number(req.params.variantId);
     const id = Number(req.params.id);
-    const { ingredient_id, quantity_base_per_unit } = req.body;
+
+    const {
+      ingredient_id,
+      quantity_original,
+      ingredient_unit_id
+    } = req.body;
+
+    if (!ingredient_id || !quantity_original) {
+      return res.status(400).json({
+        success: false,
+        message: "ingredient_id y quantity_original son obligatorios"
+      });
+    }
 
     const updated = await recipeService.updateRecipeItem(id, {
       product_variant_id: variantId,
       ingredient_id,
-      quantity_base_per_unit
+      quantity_original: Number(quantity_original),
+      ingredient_unit_id:
+        ingredient_unit_id !== null && ingredient_unit_id !== ""
+          ? Number(ingredient_unit_id)
+          : null
     });
 
     res.json({ success: true, data: updated });

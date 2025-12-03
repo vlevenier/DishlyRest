@@ -78,3 +78,15 @@ export const deleteProduct = async (req: Request, res: Response, next: NextFunct
     next(err);
   }
 };
+
+
+export const softDeleteProduct = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = Number(req.params.id);
+    console.log("Soft deleting product with ID:", id);
+    const deleted = await productService.softDeleteProduct(id);
+    res.status(200).json({ success: true , deleted });
+  } catch (err) {
+    next(err);
+  } 
+};

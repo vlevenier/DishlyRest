@@ -20,7 +20,9 @@ export const getAllProducts = async () => {
                       'id', pr.id,
                       'ingredient_id', pr.ingredient_id,
                       'quantity_base_per_unit', pr.quantity_base_per_unit,
-                      'ingredient_name', i.name
+                      'ingredient_name', i.name,
+                      'ingredient_unit_id', pr.ingredient_unit_id,
+                      'quantity_original', pr.quantity_original
                     )
                   )
                   FROM product_recipe pr
@@ -118,6 +120,18 @@ export const updateProduct = async (id: number, data: {
 
 export const deleteProduct = async (id: number) => {
   const query = `DELETE FROM products WHERE id = $1 RETURNING id`;
+  const { rows } = await postgresPool.query(query, [id]);
+  return rows[0];
+};
+
+
+export const softDeleteProduct = async (id: number) => {
+  const query = `
+    UPDATE products
+    SET active = FALSE
+    WHERE id = $1
+    RETURNING id;
+  `;
   const { rows } = await postgresPool.query(query, [id]);
   return rows[0];
 };
