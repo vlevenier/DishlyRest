@@ -365,3 +365,20 @@ async update_(id: number, data: any) {
     }
   }
 };
+
+
+export const softDeleteIngredient = async (id: number) => {
+  const result = await postgresPool.query(
+    `UPDATE ingredients 
+      SET is_active = FALSE
+      WHERE id = $1`,
+    [id]
+  );
+
+  if (result.rowCount === 0) {  
+    const err: any = new Error("Ingrediente no encontrado");
+    err.status = 404;
+    throw err;
+  } 
+  return;
+};

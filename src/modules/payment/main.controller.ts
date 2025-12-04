@@ -18,11 +18,13 @@ type BasicOrder = {
 export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const payload = req.body;
-        
+        console.log("Received order payload:", payload);
         // 1. Validar Payload Básico
         if (!payload || !Array.isArray(payload.items) || payload.items.length === 0) {
             return res.status(400).json({ success: false, message: "At least one item is required" });
         }
+
+        console.log("Creating order with payload:", payload);
 
         // 2. CREAR Y GUARDAR LA ORDEN LOCAL
         // El servicio devuelve el objeto de la orden creada { id, total, items, ... }
@@ -36,7 +38,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
             id: createdOrder.id,
             total: createdOrder.total, 
         };
-
+        console.log("Initiating Smart Point payment for order:", orderDataForPayment);
         // Llama al service que se comunica con la API de Mercado Pago Point
         const paymentIntent = await smartPointService.createPointPaymentIntent(orderDataForPayment);
 

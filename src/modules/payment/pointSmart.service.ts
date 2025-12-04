@@ -1,45 +1,57 @@
-export const createPointPaymentIntent = async(order:any) => {
-  const response = await fetch(
-    `https://api.mercadopago.com/point/integration-api/devices/${process.env.POINT_DEVICE_ID}/payment-intents`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        amount: Math.round(order.total * 100), // en centavos
-        description: `Order #${order.id}`,
-        external_reference: `order_${order.id}`,
-        metadata: {
-          order_id: order.id
-        }
-      })
+// pointSmart.service.ts
+import axios from "axios";
+
+const MP_API_URL = "https://api.mercadopago.com/v1/orders";
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN!;
+const MP_TERMINAL_ID = process.env.MP_TERMINAL_ID;
+
+export async function createPointPaymentIntent(order: { id: string; total: number }) {
+  console.log("Creating Point Smart payment intent for order:", order);
+  console.log("Using MP_ACCESS_TOKEN:", MP_ACCESS_TOKEN);
+  console.log("Using MP_TERMINAL_ID:", MP_TERMINAL_ID);
+    try {
+        const body = {
+            type: "point",
+            external_reference: order.id,
+            expiration_time: "PT10M",
+            transactions: {
+                payments: [
+                    {
+                        amount: String(Number(order.total).toFixed(0))
+                    }
+                ]
+            },
+            description: "Pago desde SmartPoint API",
+            config: {
+                point: {
+                    terminal_id: MP_TERMINAL_ID,
+                    print_on_terminal: "no_ticket"
+                },
+                payment_method: {
+                    default_type: "credit_card"
+                }
+            },
+            taxes: [
+                {
+                    payer_condition: "payment_taxable_iva"
+                }
+            ]
+        };
+
+        const headers = {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${MP_ACCESS_TOKEN}`,
+            "X-Idempotency-Key": crypto.randomUUID()
+        };
+
+        const response = await axios.post(MP_API_URL, body, { headers });
+
+        return response.data;
+
+    } catch (err: any) {
+        console.error("Error creating Point Smart order:", err.response?.data || err.message);
+        throw new Error(
+            err.response?.data?.errors?.[0]?.message || "Mercado Pago Point API error"
+        );
     }
-  );
-
-  return await response.json();
-}
-
-
-
-export const getPayment = async (paymentId: string) => {
-    // ⚠️ REEMPLAZA ESTA URL por la API de Mercado Pago para obtener detalles del pago
-    const url = `https://api.mercadopago.com/v1/payments/${paymentId}`; 
-
-    const response = await fetch(url, {
-        method: "GET",
-        headers: {
-            // Usa tu token de acceso para la autorización
-            "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`, 
-            "Content-Type": "application/json"
-        }
-    });
-
-    if (!response.ok) {
-        // Manejo de errores si MP no devuelve el pago (ej. 404)
-        throw new Error(`Failed to fetch payment ${paymentId}: ${response.statusText}`);
-    }
-
-    return await response.json();
 }

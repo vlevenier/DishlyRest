@@ -22,6 +22,7 @@ import ingredientRoutes from './modules/ingredients/ingredients.routes';
 import productRecipe from './modules/product_recipe/productRecipe.routes';
 import menuRoutes from './modules/menu/menu.routes';
 import testSocketRoute from './tests/testSocket.route'; 
+import smartPoint from './modules/payment/main.routes'
 dotenv.config();
 
 const app: Application = express();
@@ -105,6 +106,7 @@ app.use("/api/ingredients", ingredientRoutes);
 app.use("/api/product-recipe", productRecipe);
 app.use("/api/menu", menuRoutes);
 app.use("/api/dev", testSocketRoute); // ⬅️ Ruta para pruebas de Socket.IO
+app.use("/api/payment", smartPoint);
 // Manejo de rutas no encontradas
 app.use(notFoundHandler);
 
