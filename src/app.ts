@@ -39,6 +39,8 @@ const allowedOrigins = [
   "https://www.angusgrillhouse.cl",
   "https://angusgrillhouse.cl",
 ];
+
+
 // Middlewares de seguridad
 app.use(helmet());
 // app.use(
@@ -47,20 +49,28 @@ app.use(helmet());
 //     credentials: true,
 //   })
 // );
-
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir requests sin origin (Postman, sistemas internos)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    if (!origin) return callback(null, true); // apps móviles o Postman
+    if (allowedOrigins.includes(origin)) return callback(null, true);
 
     return callback(new Error("CORS bloqueado para " + origin));
   },
   credentials: true,
 }));
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     // Permitir requests sin origin (Postman, sistemas internos)
+//     if (!origin) return callback(null, true);
+
+//     if (allowedOrigins.includes(origin)) {
+//       return callback(null, true);
+//     }
+
+//     return callback(new Error("CORS bloqueado para " + origin));
+//   },
+//   credentials: true,
+// }));
 // Middlewares de parseo
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
