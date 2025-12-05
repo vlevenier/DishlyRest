@@ -11,7 +11,7 @@ router.post('/', async (req: Request, res: Response) => {
         if (!paymentId) {
             return res.status(400).json({ error: 'Payment ID missing' });
         }
-
+        //const res_ = req.body;
         await processPaymentWebhook(paymentId);
 
         // Siempre responder 200 a Mercado Pago para confirmar que recibiste el webhook
