@@ -23,6 +23,7 @@ import productRecipe from './modules/product_recipe/productRecipe.routes';
 import menuRoutes from './modules/menu/menu.routes';
 import testSocketRoute from './tests/testSocket.route'; 
 import smartPoint from './modules/payment/main.routes'
+import mpHook from './modules/webhooks/mp.routes';
 dotenv.config();
 
 const app: Application = express();
@@ -117,6 +118,8 @@ app.use("/api/product-recipe", productRecipe);
 app.use("/api/menu", menuRoutes);
 app.use("/api/dev", testSocketRoute); // ⬅️ Ruta para pruebas de Socket.IO
 app.use("/api/payment", smartPoint);
+app.use("/api/webhooks/mp", mpHook);
+
 // Manejo de rutas no encontradas
 app.use(notFoundHandler);
 
