@@ -3,7 +3,10 @@ import {
   getComboItems,
   addComboItem,
   updateComboItem,
-  deleteComboItem
+  deleteComboItem,
+  getComboDetail,
+  getAllCombos,
+  createCombo
 } from "./combos.controller";
 
 const router = Router();
@@ -19,5 +22,14 @@ router.put("/items/:id", updateComboItem);
 
 // DELETE /combos/items/:id
 router.delete("/items/:id", deleteComboItem);
+
+
+router.get("/:id", getComboDetail);
+
+router.get("/", getAllCombos);
+
+router.post("/", createCombo);
+
+
 
 export default router;

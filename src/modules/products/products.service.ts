@@ -38,6 +38,7 @@ export const getAllProducts = async () => {
     FROM products p
     LEFT JOIN categories c ON c.id = p.category_id
     LEFT JOIN product_variants v ON v.product_id = p.id
+    where p.active = true
     GROUP BY p.id, c.name
     ORDER BY p.name ASC;
   `;
