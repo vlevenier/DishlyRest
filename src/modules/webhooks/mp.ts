@@ -3,7 +3,24 @@ import * as webhookService from "./mp.service"; // ⬅️ Importar el nuevo serv
 
 export async function mpWebhook(req: Request, res: Response, next: NextFunction) {
     try {
-       
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
+       /* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION *//* ESTA NO ES LA FUNCION */
         console.log("BEGIN WEB WOOK");
         console.log( req.body);
          const { type, data } = req.body;
@@ -16,7 +33,7 @@ export async function mpWebhook(req: Request, res: Response, next: NextFunction)
         const paymentId = data.id;
 
         // 2. Delegar el procesamiento al servicio (verifica, actualiza DB y emite Socket)
-        await webhookService.processPaymentWebhook(paymentId);
+       // await webhookService.processPaymentWebhook(paymentId);
 
         // 3. Responder 200 OK a Mercado Pago.
         res.sendStatus(200); 
