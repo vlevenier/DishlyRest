@@ -77,5 +77,11 @@ export const processOrderWebhook = async (webhook: any) => {
 
     } else {
         console.log(`[Webhook] Orden con estado: ${status} / ${statusDetail}`);
+
+        io.emit("payment_update", {
+            orderId,
+            status: "canceled",
+            total: totalPaid
+        });
     }
 };
