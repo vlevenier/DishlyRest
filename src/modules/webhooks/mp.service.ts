@@ -76,13 +76,31 @@ export const processOrderWebhook = async (webhook: any) => {
     price: item.subtotal
 }));
 
-    // 2. Emitimos el evento con la estructura completa
+console.log("this send");
+console.log(
+    {
+    // Metadatos (opcionales, pero útiles si tu app los usa para filtrar)
+    action: "payment.updated",
+    type: "payment",
+
+    // Datos que Kotlin está buscando directamente:
+    orderId: orderId,  // Kotlin busca "orderId"
+    status: "paid",
+    total: order.total,           // Kotlin busca "total"
+    items: itemsForSocket         // Kotlin busca "items"
+}
+);
     io.emit("payment_update", {
-        orderId: order.order_number, // Enviamos el 156 (número legible) en vez del ID interno
-        status: "paid",
-        total: order.total,
-        items: itemsForSocket // <--- AQUÍ va el array con los productos
-    });
+    // Metadatos (opcionales, pero útiles si tu app los usa para filtrar)
+    action: "payment.updated",
+    type: "payment",
+
+    // Datos que Kotlin está buscando directamente:
+    orderId: orderId,  // Kotlin busca "orderId"
+    status: "paid",
+    total: order.total,           // Kotlin busca "total"
+    items: itemsForSocket         // Kotlin busca "items"
+});
     } else {
         console.log(`[Webhook] Orden con estado: ${status} / ${statusDetail}`);
 
