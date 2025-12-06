@@ -144,7 +144,7 @@ export const getOrderByIdService = async (orderId: number) => {
   if (!order) return null;
 
   const itemsQuery = `
-    SELECT oi.*, p.name as product_name, pv.name as variant_name, pv.price_modifier
+    SELECT oi.*, p.name as product_name, pv.name as variant_name, pv.price_modifier, p.is_combo
     FROM public.order_items oi
     LEFT JOIN public.products p ON p.id = oi.product_id
     LEFT JOIN public.product_variants pv ON pv.id = oi.variant_id

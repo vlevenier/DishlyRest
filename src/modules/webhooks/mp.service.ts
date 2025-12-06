@@ -72,8 +72,9 @@ export const processOrderWebhook = async (webhook: any) => {
       // 1. Preparamos los items en un formato limpio para la app móvil
  const itemsForSocket = order.items.map((item: any) => ({
     qty: item.quantity,
-    name: item.product_name,
-    price: item.subtotal
+    name: (item.is_combo ? '(C) ' : '') + item.product_name,
+    price: item.subtotal,
+   
 }));
 
 console.log("this send");
