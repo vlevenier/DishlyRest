@@ -68,13 +68,21 @@ export const processOrderWebhook = async (webhook: any) => {
         console.log(`[Webhook] Orden pagada correctamente: ${orderId}`);
 
         await orderService.markOrderPaidService(Number(orderId));
+        const order = await orderService.getOrderByIdService(orderId);
+      // 1. Preparamos los items en un formato limpio para la app móvil
+ const itemsForSocket = order.items.map((item: any) => ({
+    qty: item.quantity,
+    name: item.product_name,
+    price: item.subtotal
+}));
 
-        io.emit("payment_update", {
-            orderId,
-            status: "paid",
-            total: totalPaid
-        });
-
+    // 2. Emitimos el evento con la estructura completa
+    io.emit("payment_update", {
+        orderId: order.order_number, // Enviamos el 156 (número legible) en vez del ID interno
+        status: "paid",
+        total: order.total,
+        items: itemsForSocket // <--- AQUÍ va el array con los productos
+    });
     } else {
         console.log(`[Webhook] Orden con estado: ${status} / ${statusDetail}`);
 
