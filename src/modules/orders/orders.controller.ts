@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import * as ordersService from "./orders.service";
+import { io } from '../../server';
 
 export const getOrders = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -133,6 +134,25 @@ export const markOrderPaidService = async (req: Request, res: Response, next: Ne
     const updates = req.body;
       console.log("Updates received:", updates);
     const updated = await ordersService.markOrderPaidService(orderId);
+    const order = await ordersService.getOrderByIdService(orderId);
+    const itemsForSocket = order.items.map((item: any) => ({
+    qty: item.quantity,
+    name: (item.is_combo ? '(C) ' : '') + item.product_name,
+    price: item.subtotal,
+   
+}));
+
+  io.emit("payment_update", {
+    // Metadatos (opcionales, pero útiles si tu app los usa para filtrar)
+    action: "payment.updated",
+    type: "payment",
+
+    // Datos que Kotlin está buscando directamente:
+    orderId: orderId,  // Kotlin busca "orderId"
+    status: "paid",
+    total: order.total,           // Kotlin busca "total"
+    items: itemsForSocket         // Kotlin busca "items"
+});
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
     next(err);
