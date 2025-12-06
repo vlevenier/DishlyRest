@@ -104,10 +104,17 @@ console.log(
     } else {
         console.log(`[Webhook] Orden con estado: ${status} / ${statusDetail}`);
 
-        io.emit("payment_update", {
-            orderId,
-            status: "canceled",
-            total: totalPaid
-        });
+       // CASO FALLO/CANCELADO: Usamos un canal DIFERENTE que la impresora ignora
+    console.log(`[Socket] Notificando error al front orden ${orderId}`);
+    io.emit("payment_info", {
+    // Metadatos (opcionales, pero útiles si tu app los usa para filtrar)
+    action: "payment.updated",
+    type: "payment",
+
+    // Datos que Kotlin está buscando directamente:
+    orderId: orderId,  // Kotlin busca "orderId"
+    status: "error",
+    
+});
     }
 };
