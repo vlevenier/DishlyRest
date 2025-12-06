@@ -3,8 +3,10 @@ import * as webhookService from "./mp.service"; // ⬅️ Importar el nuevo serv
 
 export async function mpWebhook(req: Request, res: Response, next: NextFunction) {
     try {
-        const { type, data } = req.body;
-        
+       
+        console.log("BEGIN WEB WOOK");
+        console.log( req.body);
+         const { type, data } = req.body;
         // 1. MP te envía notificaciones por diferentes eventos, solo procesamos 'payment'
         if (type !== "payment" || !data || !data.id) {
             // Siempre debes responder 200/204 rápidamente
