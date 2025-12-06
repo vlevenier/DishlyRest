@@ -5,6 +5,7 @@ const router = Router();
 
 router.post('/', async (req: Request, res: Response) => {
     try {
+        console.log("[BEGIN SOCKET ]");
         // Mercado Pago envía el ID del pago en req.body.data.id
         const paymentId = req.body?.data?.id;
         console.log('[Webhook Received] Payment ID:', paymentId);
