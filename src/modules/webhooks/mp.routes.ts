@@ -9,6 +9,7 @@ router.post('/', async (req: Request, res: Response) => {
         // Mercado Pago envía el ID del pago en req.body.data.id
         const paymentId = req.body?.data?.id;
         console.log('[Webhook Received] Payment ID:', paymentId);
+        console.log(JSON.stringify(req.body));
         if (!paymentId) {
             return res.status(400).json({ error: 'Payment ID missing' });
         }
